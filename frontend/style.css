@@ -1,0 +1,279 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+*{
+    font-family: 'Poppins', sans-serif;
+}
+
+body{
+    margin: 0;
+    padding: 0;
+    background-color: #343541;
+}
+
+.header{
+    position: fixed; 
+    top: 0;
+    display: flex;
+    justify-content: flex-end; 
+    align-items: center;
+    color: #ccc;
+    border-bottom: 1px solid #5c5c66;
+    height: 45px;
+    width: 100%;
+    background-color: #343541;
+
+}
+
+.header h3{
+    position: absolute;
+    font-size: 17px;
+    font-weight: 500;
+    margin: 0;
+    /* text-align: center; */
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.container{
+    max-width: 920px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 0 auto;
+    padding-top: 45px;
+}
+
+.info{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 20;
+}
+
+.info a{
+    color: #fff;
+    text-decoration: none;
+    font-size: 25px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+
+
+.input-container{
+    background-color: #343541;
+    padding: 10px;
+    display: none;
+    justify-content: space-between;
+    border-top: 1px solid #5c5c66;
+    position: sticky;
+    bottom: 0;
+}
+
+#user-input{
+    background-color: #40414f;
+    color: #fff;
+    border: none;
+    outline: none;
+    padding: 8px;
+    font-size: 14px;
+
+    border-radius: 5px;
+}
+#user-input{
+    flex: 9;
+    font-weight: 400;
+}
+#username{
+    font-weight: 200;
+
+}
+
+#user-input::placeholder{
+    color: #8e8e8e;
+    font-weight: 400;
+}
+
+#send-button{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4caf50;
+    color: #fff;
+    cursor: pointer;
+    margin-left: 15px;
+    transition: all 0.3s ease;
+}
+
+#send-button:hover{
+    background-color: #388e3c;
+}
+
+.chat-container{
+    flex: 1 1 auto;     /* mở rộng theo container */
+    overflow-y: auto;   /* bật scroll dọc */
+    padding: 10px;
+    min-height: 0;      /* quan trọng cho flex item */
+}
+
+.chat-box{
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+}
+
+#chat-log{
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+#chat-log i{
+    margin-right: 10px;
+    color: #fff;
+    border-radius: 5px;
+}
+
+.bot, .user{
+    display: flex;
+    align-items: flex-start;
+    color: #eee;
+    width: 100%;
+    padding: 15px 7px 15px 10px;
+    border-radius: 6px;
+}
+
+.bot{
+    background-color: #444654;
+}
+
+#chat-log #user-icon i{
+    background-color: #19c37d;
+    padding: 10px 11px;
+}
+
+#chat-log #bot-icon i{
+    background-color: #9859b7;
+    padding: 10px 8px 11px;
+}
+
+#mic-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #2196f3; /* xanh dương để khác send */
+    color: #fff;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+}
+
+#mic-button:hover {
+    background-color: #1976d2; /* xanh đậm khi hover */
+}
+
+#mic-icon {
+    font-size: 16px; /* icon mic nhỏ gọn */
+}
+
+/* Container đăng nhập */
+.login-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #3b3c49;
+    padding: 40px 30px;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    width: 320px;
+    text-align: center;
+    color: #fff;
+}
+
+.login-container h2 {
+    margin-bottom: 25px;
+    font-weight: 500;
+    color: #fff;
+}
+
+/* Group input */
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.input-group i {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    color: #cfcfcf;
+    font-size: 16px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px 12px 10px 38px;
+    background-color: #343541;
+    border: 1px solid #5c5c66;
+    border-radius: 5px;
+    color: #fff;
+    outline: none;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.input-group input::placeholder {
+    color: #8e8e8e;
+}
+
+/* Nút đăng nhập */
+#conform {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    width: 100%;
+    background-color: #4caf50;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    color: #fff;
+}
+
+#conform:hover {
+    background-color: #388e3c;
+}
+
+#button-icon {
+    font-size: 16px;
+}
+#logout-button {
+    background-color: #e53935;
+    border: none;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+#logout-button:hover {
+    background-color: #c62828;
+}

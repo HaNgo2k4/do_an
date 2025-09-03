@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <title>Hadiest</title>
+</head>
+
+<body>
+    
+    <div class="header">
+        <h3>Hadiest – Trợ lý ảo hỗ trợ nghe nhạc</h3>
+         <button id="logout-button">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </button>
+    </div>
+    <div class="container">
+
+
+             
+        <div class="info">
+            <a id = "name">
+                Hadiest
+            </a>
+        </div>
+        <div class="login-container">
+        <h2>Đăng Nhập</h2>
+        <form id="login-form">
+            <div class="input-group">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" id="username" placeholder="Tên đăng nhập" required>
+            </div>
+        <button  id="conform">
+            <i class="fa-solid fa-check" id="conform-icon"></i> Đăng Nhập
+        </button>
+    </form>
+</div>
+        <div>
+
+        <div class="chat-container">
+            <div id="chat-log"></div>
+        </div>
+
+        </div>
+       
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Send a message.">
+            <button id="mic-button">
+                <i class="fa-solid fa-microphone-slash" id="mic-icon"></i>
+            </button>
+            <button id="send-button">
+                <i class="fa-solid fa-paper-plane" id="button-icon"></i>
+            </button>
+        </div>
+
+    </div>
+     <div id="video-container"></div>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>
