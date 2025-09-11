@@ -1,60 +1,101 @@
-from fastapi import APIRouter, UploadFile, File, Query
+from langchain.tools.base import BaseTool
+from googleapiclient.discovery import build
+from pydantic import Field
 from pathlib import Path
-from fastapi.responses import JSONResponse
-from app.model import RequestState
-from agents.ai_agents import get_response_from_ai_agent
-from agents.speech_text import WavSpeechRecognizer
-from agents.memory import get_dialogue_by_sessionId
+from audio_processing.ACRCloud_identify_protocol_v1 import identify_song
 import json
-
-router = APIRouter()
-
-@router.post("/chat")
-def chat_endpoint(request: RequestState, session_id: str = Query(...)):
-    response = get_response_from_ai_agent(
-        llm_id="llama-3.3-70b-versatile",
-        # llm_id="llama-3.1-8b-instant",
-        query=request.messages,
-        provider=request.model_provider,
-        user_id=session_id
+import asyncio
+class youtube_search_tool(BaseTool):  
+    name: str = "youtube_search_tool"
+    youtube_api_key: str = Field(
+        ...,
+        description="API key for accessing YouTube data."
     )
-    return response
 
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    description: str = (
+     "Sử dụng tool này khi người dùng:\n"
+        "- Yêu cầu nghe nhạc: 'mở bài hát X', 'phát nhạc Y', 'tìm bài Z'\n"
+        "- Tìm ca sĩ: 'nghe nhạc của ca sĩ A', 'mở nhạc B'\n"
+        "- Các từ khóa: mở, phát, nghe, tìm, nhạc, bài hát, ca sĩ\n"
+        "Input: query (tên bài hát hoặc ca sĩ)\n"
+        "Output không trả link youtube"        
+)
+  
+    def __init__(self, youtube_api_key: str, **kwargs):
+        # Khởi tạo với youtube_api_key
+        super().__init__(youtube_api_key=youtube_api_key, **kwargs)
 
-@router.post("/upload-audio/")
-async def upload_audio(file: UploadFile = File(...)):
-    file_path = UPLOAD_DIR / file.filename
-    with open(file_path, "wb") as f:
-        f.write(await file.read())
+
+    def _run(self, query: str, max_results: int = 5) -> str:
+
+        try:
+            youtube = build("youtube", "v3", developerKey=self.youtube_api_key)
+            # print(query)
+            response = youtube.search().list(
+                q=query,
+                part="id,snippet",
+                type="video",
+                # videoCategoryId="10",
+                maxResults=max_results,
+                order="relevance"
+            ).execute()
+            results = []
+            for item in response.get("items", []):
+                if item["id"]["kind"] == "youtube#video":
+                    video_id = item["id"]["videoId"]
+                    title = item["snippet"]["title"]
+                    results.append({
+                        "title": title,
+                        "video_id": video_id
+                    })
+                    break
+
+            if not results:
+
+                return json.dumps({"error": "Không tìm thấy kết quả."}, ensure_ascii=False)
+            return json.dumps(results[0], ensure_ascii=False) if results else ""
+                
+        except Exception as e:
+            print("Lỗi khi gọi YouTube API:", e)
+            return f""
+
+    async def _arun(self, query: str, max_results: int = 1) -> str:
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self._run, query, max_results)
+
+class identify_song_tool(BaseTool):
+    name: str = "identify_song_tool"
+    user_id: str = Field(..., description="User ID để xác định file nhạc")
     
-    return {
-        "status": "success",
-        "file": str(file_path)
-    }
+    description: str = (
+        "Nhận diện bài hát từ microphone.\n"
+        "Sử dụng khi người dùng đã sử dụng microphone và cần nhận diện bài hát.\n"
+        "Output: thông tin bài hát bao gồm title, artists"
+    )
+    def __init__(self, user_id: str):
+        super().__init__(user_id=user_id)
+    def _run(self) -> str:
+        target_user_id = self.user_id
+        UPLOAD_DIR = Path("AudioFiles")
+        file_path = UPLOAD_DIR / target_user_id / "nonspeech_clean.wav"
+        if not file_path.exists():
+            return {"error": "File nhạc không tồn tại cho session này."}
+        music_info = identify_song(file_path)
+        if not music_info:
+            return {"error": "Không nhận diện được bài hát"}
 
-@router.get("/get-audio-result")
-async def get_audio_result(session_id: str = Query(...)):
+        song = music_info[0]
+        title = song.get("title", "Unknown")
+        artists = song.get("artists", [])
+        youtube_vid = song.get("external_metadata", {}).get("youtube", {}).get("vid", None)
 
-    filename = session_id + ".wav"
-    file_path = UPLOAD_DIR / filename
-    recognizer = WavSpeechRecognizer()
+        result = [{
+        "title": title,
+        "artists": artists
+        }]
+        if youtube_vid:
+            result[0]["video_id"] = youtube_vid
+        return result
 
-    if not file_path.exists():
-        return {"status": "error", "message": "File không tồn tại"}
-
-    results = recognizer.recognize_wav(str(file_path))
-    if not results or results[0].get("error"):
-        return {"status": "error", "message": "Không hiểu âm thanh"}
-
-    return {
-        "status": "success",
-        "file": filename,
-        "results": results
-    }
-
-@router.get("/get-dialogue/{session_id}")
-def get_dialogue(session_id: str):
-    dialogue = get_dialogue_by_sessionId(session_id)
-    return JSONResponse(content=dialogue)
+    async def _arun(self, file_path: str) -> str:
+        return self._run(file_path)

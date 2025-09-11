@@ -9,10 +9,10 @@ const chatLog = document.getElementById('chat-log'),
       youtube = document.getElementById('youtube'),
       inputContainer = document.querySelector('.input-container'),
       info = document.querySelector('.info');
-let url = "https://friendly-space-capybara-5w9r74r5pv52vpx-9999.app.github.dev"
+// let url = "https://friendly-space-capybara-5w9r74r5pv52vpx-9999.app.github.dev"
 // let url = "https://ll62xj-9999.csb.app"
 // let url = "https://a0545507d9f6.ngrok-free.app"
-// let url = "http://localhost:9999"
+let url = "http://localhost:9999"
 sendButton.addEventListener('click', sendMessage);
 userInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') sendMessage();
@@ -63,7 +63,6 @@ window.onload = function() {
 const modelConfig = {
     model_name: "llama-3.3-70b-versatile",
     model_provider: "Groq",
-    allow_search: false
 };
 
 
@@ -125,36 +124,64 @@ function appendMessage(sender, message) {
         icon.classList.add('fa-solid', 'fa-robot');
         iconElement.id = 'bot-icon';
                 console.log(message)
-        if (message.tool && message.tool[0]) {
-            try {
-                const data = typeof message.tool[0] === "string" ? JSON.parse(message.tool[0]) : message.tool[0];
-                console.log(data)
-                if (data.video_id) {
-                    const videoContainer = document.createElement('div');
+    if (Array.isArray(message.tool) && message.tool.length > 0) {
+        try {
+            let videos = [];
 
-                    videoContainer.style.display = "flex";
-                    videoContainer.style.justifyContent = "center";
-                    videoContainer.style.marginBottom = "10px";
-                    videoContainer.style.width = "100%"; 
-                    const iframe = document.createElement("iframe");
-                    iframe.width = "560";  
-                    iframe.height = "315"; 
-                    iframe.src = `https://www.youtube.com/embed/${data.video_id}`;
-                    iframe.title = data.title || "YouTube video player";
-                    iframe.frameBorder = "0";
-                    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-                    iframe.allowFullscreen = true;
-                    videoContainer.appendChild(iframe);
-                    messageElement.appendChild(videoContainer); 
-                    if (activeIframe ) {
-                        activeIframe.closest('div').remove();
+            message.tool.forEach(toolItem => {
+                try {
+                    // Nếu là string, parse ra
+                    let parsed = typeof toolItem === "string" ? JSON.parse(toolItem) : toolItem;
+
+                    // Nếu sau khi parse vẫn là string (case bị double encode) => parse tiếp
+                    if (typeof parsed === "string") {
+                        parsed = JSON.parse(parsed);
                     }
-                    activeIframe = iframe;
-}
-            } catch (err) {
-                console.error("Lỗi parse tool JSON:", err);
+
+                    // Nếu ra mảng thì gộp vào
+                    if (Array.isArray(parsed)) {
+                        videos = videos.concat(parsed);
+                    } else {
+                        videos.push(parsed);
+                    }
+                } catch (err) {
+                    console.error("Parse toolItem lỗi:", err, toolItem);
+                }
+            });
+
+        console.log("✅ Parsed videos:", videos);
+        videos = videos.filter(v => v && v.video_id)
+
+            if (videos.length > 0) {
+            const data = videos[0]; 
+            const videoContainer = document.createElement('div');
+            videoContainer.style.display = "flex";
+            videoContainer.style.justifyContent = "center";
+            videoContainer.style.marginBottom = "10px";
+            videoContainer.style.width = "100%"; 
+
+            const iframe = document.createElement("iframe");
+            iframe.width = "560";
+            iframe.height = "315";
+            iframe.src = `https://www.youtube.com/embed/${data.video_id}`;
+            iframe.title = data.title || "YouTube video player";
+            iframe.frameBorder = "0";
+            iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+            iframe.allowFullscreen = true;
+
+            videoContainer.appendChild(iframe);
+            messageElement.appendChild(videoContainer);
+
+            if (activeIframe) {
+                activeIframe.closest('div').remove();
             }
+            activeIframe = iframe;
         }
+    } catch (err) {
+        console.error("Lỗi khi xử lý video:", err);
+    }
+}
+
 
         if (message.ai) {
             const textElement = document.createElement('div');
@@ -169,6 +196,21 @@ function appendMessage(sender, message) {
     chatLog.appendChild(chatElement);
     chatLog.scrollTop = chatLog.scrollHeight;
 }
+  function appendListMessage(ListMessage) {
+  ListMessage.forEach(msg => {
+    if (msg.role === "user") {
+      appendMessage("user", msg.content);
+    } else if (msg.role === "ai") {
+      appendMessage("bot", { 
+        ai: msg.content, 
+        tool: msg.tool || [] 
+      });
+    } else if (msg.role === "tool") {
+      appendMessage("tool", msg.content);
+    }
+  });
+}
+
 
 const micButton = document.getElementById("mic-button");
 const micIcon = document.getElementById("mic-icon");
@@ -237,15 +279,16 @@ const micIcon = document.getElementById("mic-icon");
             console.log("Lấy kết quả nhận diện...");
             console.log(res1);
 
-            const text = await res1.text();
+            const text = await res1.json();
             console.log(text);
-            const data1 = JSON.parse(text);
-            console.log("JSON:", data1);
-            if (data1.status === "success" && data1.results.length > 0) {
-                userInput.value = data1.results[0].text;
-            } else{
-              alert("Vui lòng nói lại!")
-            }
+            appendListMessage(text)
+            // const data1 = JSON.parse(text);
+            // console.log("JSON:", data1);
+            // if (data1.status === "success" && data1.results.length > 0) {
+            //     userInput.value = data1.results[0].text;
+            // } else{
+            //   alert("Vui lòng nói lại!")
+            // }
               sendButton.disabled = false;
               userInput.disabled = false;
               sendButton.style.backgroundColor = "#4caf50";
@@ -289,19 +332,13 @@ const micIcon = document.getElementById("mic-icon");
         const dialogue = await res.json();
         console.log("Dữ liệu dialogue:", dialogue);
 
-        dialogue.forEach(msg => {
-          if (msg.role === "user") {
-            appendMessage("user", msg.content);
-          } else if (msg.role === "bot") {
-            appendMessage("bot", { ai: msg.content, tool: msg.tool || [] });
-          }
-        });
+        appendListMessage(dialogue)
 
       } catch (err) {
         console.error("Load dialogue error:", err);
     }
-
   }
+
 
   function audioBufferToWav(buffer) {
     let numOfChan = buffer.numberOfChannels,

@@ -31,7 +31,7 @@ def get_dialogue_by_sessionId(session_id: str):
             dialogue.append({"role": "user", "content": content})
 
         elif role == "ai":
-            temp_bot = {"role": "bot", "content": content, "tool": []}
+            temp_bot = {"role": "ai", "content": content, "tool": []}
             dialogue.append(temp_bot)
 
         else: 

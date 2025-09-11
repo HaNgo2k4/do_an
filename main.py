@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.route import router
 app = FastAPI(title="Đồ Án Trợ Lí Ảo")
-# --- CORS (cho phép frontend chạy từ bất kỳ domain nào) ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
