@@ -1,0 +1,7 @@
+// tải redis-server và ffmpeg
+sudo apt-get update
+sudo apt install redis-server
+sudo apt-get install ffmpeg
+
+// chạy redis-server
+redis-server

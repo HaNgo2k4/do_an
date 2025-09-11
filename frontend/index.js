@@ -9,10 +9,10 @@ const chatLog = document.getElementById('chat-log'),
       youtube = document.getElementById('youtube'),
       inputContainer = document.querySelector('.input-container'),
       info = document.querySelector('.info');
-// let url = "https://friendly-space-capybara-5w9r74r5pv52vpx-9999.app.github.dev"
+let url = "https://orange-trout-jxg7p4799j6255qr-9999.app.github.dev"
 // let url = "https://ll62xj-9999.csb.app"
 // let url = "https://a0545507d9f6.ngrok-free.app"
-let url = "http://localhost:9999"
+// let url = "http://localhost:9999"
 sendButton.addEventListener('click', sendMessage);
 userInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') sendMessage();
