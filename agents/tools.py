@@ -1,5 +1,5 @@
 from agents.tool import youtube_search_tool,identify_song_tool
-from app.config import YOUTUBE_API_KEY
+from backend.config import YOUTUBE_API_KEY
 def get_tools(user_id):
     return [
         youtube_search_tool(youtube_api_key=YOUTUBE_API_KEY),

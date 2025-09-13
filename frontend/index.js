@@ -3,72 +3,135 @@ const chatLog = document.getElementById('chat-log'),
       sendButton = document.getElementById('send-button'),
       conformButton = document.getElementById('conform'),
       logoutButton = document.getElementById('logout-button'),
+      clearHistoryButton = document.getElementById('clear-history-button'),
+      clearHistoryModal = document.getElementById('clear-history-modal'),
+      confirmClearButton = document.getElementById('confirm-clear'),
+      cancelClearButton = document.getElementById('cancel-clear'),
       usernameInput = document.getElementById('username'),
       buttonIcon = document.getElementById('button-icon'),
       loginContainer = document.querySelector('.login-container'),
       youtube = document.getElementById('youtube'),
       inputContainer = document.querySelector('.input-container'),
       info = document.querySelector('.info');
-// let url = "https://friendly-space-capybara-5w9r74r5pv52vpx-9999.app.github.dev"
+
+// let url = "https://orange-trout-jxg7p4799j6255qr-9999.app.github.dev"
 // let url = "https://ll62xj-9999.csb.app"
 // let url = "https://a0545507d9f6.ngrok-free.app"
-let url = "http://localhost:9999"
+let url = "http://localhost:9999";
+
 sendButton.addEventListener('click', sendMessage);
 userInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') sendMessage();
 });
-conformButton.addEventListener('click', (e)=>{
-  e.preventDefault();
-  const username = usernameInput.value;
-  if (!username) {
-    alert("Vui lòng nhập tên đăng nhập!");
-    return; 
-  }
-  sessionStorage.setItem("sessionId", username);
-  document.getElementById('name').innerText = "Xin chào " + username
-  loginContainer.style.display = "none";
-  inputContainer.style.display = "flex"
-  logoutButton.style.display = "block"
-  loadDialogue(username)
 
-})
+// Toggle nút clear history
+function toggleClearHistoryButton() {
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (sessionId && chatLog.children.length > 0) {
+        clearHistoryButton.style.display = "block"; 
+    } else {
+        clearHistoryButton.style.display = "none"; 
+    }
+}
 
+// Đăng nhập
+conformButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    const username = usernameInput.value;
+    if (!username) {
+        alert("Vui lòng nhập tên đăng nhập!");
+        return; 
+    }
+    sessionStorage.setItem("sessionId", username);
+    document.getElementById('name').innerText = "Xin chào " + username;
+    loginContainer.style.display = "none";
+    inputContainer.style.display = "flex";
+    logoutButton.style.display = "block";
+
+    loadDialogue(username).then(() => {
+        toggleClearHistoryButton();
+    });
+});
+
+// Đăng xuất
 logoutButton.addEventListener("click", () => {
     sessionStorage.removeItem("sessionId");  
     loginContainer.style.display = "block";  
     inputContainer.style.display = "none";
-    logoutButton.style.display = "none"
+    logoutButton.style.display = "none";
     chatLog.innerHTML = "";
-
+    info.style.display = "flex";
+    toggleClearHistoryButton();
 });
 
+// Xử lý nút xóa lịch sử
+clearHistoryButton.addEventListener("click", () => {
+    clearHistoryModal.style.display = "block";
+});
+
+confirmClearButton.addEventListener("click", async () => {
+    const sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) return;
+
+    try {
+        const response = await fetch(url + `/clear-history/${sessionId}`, {
+            method: "DELETE"
+        });
+
+        if (response.ok) {
+            chatLog.innerHTML = "";
+            info.style.display = "flex";
+        } else {
+            throw new Error("Không thể xóa lịch sử trên server");
+        }
+    } catch (error) {
+        console.error("Lỗi khi xóa lịch sử:", error);
+        chatLog.innerHTML = "";
+        info.style.display = "flex";
+        alert("Đã xóa lịch sử trò chuyện trên giao diện!");
+    }
+
+    clearHistoryModal.style.display = "none";
+    toggleClearHistoryButton();
+});
+
+cancelClearButton.addEventListener("click", () => {
+    clearHistoryModal.style.display = "none";
+});
+clearHistoryModal.addEventListener("click", (e) => {
+    if (e.target === clearHistoryModal) {
+        clearHistoryModal.style.display = "none";
+    }
+});
+
+// Load khi vào lại trang
 window.onload = function() {
    if (sessionStorage.getItem("sessionId")) {
     sessionId = sessionStorage.getItem("sessionId");
     console.log("Đã có sessionId:", sessionId );
-    document.getElementById('name').innerText = "Xin chào " + sessionId;
+    document.getElementById('name').innerText = "Xin chào " + sessionId;
     loginContainer.style.display = "none";
-    inputContainer.style.display = "flex"
-    logoutButton.style.display = "block"
+    inputContainer.style.display = "flex";
+    logoutButton.style.display = "block";
 
-    loadDialogue(sessionId)
-  } else{
-    inputContainer.style.display = "none"
-    logoutButton.style.display = "none"
-
+    loadDialogue(sessionId).then(() => {
+        toggleClearHistoryButton();
+    });
+  } else {
+    inputContainer.style.display = "none";
+    logoutButton.style.display = "none";
+    clearHistoryButton.style.display = "none";
   }
-
-
 };
+
 const modelConfig = {
     model_name: "llama-3.3-70b-versatile",
     model_provider: "Groq",
 };
 
-
 function sendMessage() {
     const message = userInput.value.trim();
-    const sessionId = sessionStorage.getItem("sessionId")
+    const sessionId = sessionStorage.getItem("sessionId");
     if (!message) return;
     buttonIcon.classList.remove('fa-solid', 'fa-paper-plane');
     buttonIcon.classList.add('fas', 'fa-spinner', 'fa-pulse');
@@ -86,10 +149,7 @@ function sendMessage() {
     fetch(url+`/chat?session_id=${sessionId}`, options)
         .then(response => {
             if (!response.ok) throw new Error(`Lỗi ${response.status}: ${response.statusText}`);
-            {
-
-              return response.json();
-            }
+            return response.json();
         })
         .then(data => appendMessage('bot', data))
         .catch(err =>{
@@ -99,8 +159,8 @@ function sendMessage() {
             buttonIcon.classList.add('fa-solid', 'fa-paper-plane');
             buttonIcon.classList.remove('fas', 'fa-spinner', 'fa-pulse');
         });
-
 }
+
 let activeIframe = null;
 function appendMessage(sender, message) { 
     info.style.display = "none";
@@ -123,65 +183,60 @@ function appendMessage(sender, message) {
     } else {
         icon.classList.add('fa-solid', 'fa-robot');
         iconElement.id = 'bot-icon';
-                console.log(message)
-    if (Array.isArray(message.tool) && message.tool.length > 0) {
-        try {
-            let videos = [];
+        console.log(message);
+        
+        if (Array.isArray(message.tool) && message.tool.length > 0) {
+            try {
+                let videos = [];
 
-            message.tool.forEach(toolItem => {
-                try {
-                    // Nếu là string, parse ra
-                    let parsed = typeof toolItem === "string" ? JSON.parse(toolItem) : toolItem;
-
-                    // Nếu sau khi parse vẫn là string (case bị double encode) => parse tiếp
-                    if (typeof parsed === "string") {
-                        parsed = JSON.parse(parsed);
+                message.tool.forEach(toolItem => {
+                    try {
+                        let parsed = typeof toolItem === "string" ? JSON.parse(toolItem) : toolItem;
+                        if (typeof parsed === "string") {
+                            parsed = JSON.parse(parsed);
+                        }
+                        if (Array.isArray(parsed)) {
+                            videos = videos.concat(parsed);
+                        } else {
+                            videos.push(parsed);
+                        }
+                    } catch (err) {
+                        console.error("Parse toolItem lỗi:", err, toolItem);
                     }
+                });
 
-                    // Nếu ra mảng thì gộp vào
-                    if (Array.isArray(parsed)) {
-                        videos = videos.concat(parsed);
-                    } else {
-                        videos.push(parsed);
+                console.log("✅ Parsed videos:", videos);
+                videos = videos.filter(v => v && v.video_id);
+
+                if (videos.length > 0) {
+                    const data = videos[0]; 
+                    const videoContainer = document.createElement('div');
+                    videoContainer.style.display = "flex";
+                    videoContainer.style.justifyContent = "center";
+                    videoContainer.style.marginBottom = "10px";
+                    videoContainer.style.width = "100%"; 
+
+                    const iframe = document.createElement("iframe");
+                    iframe.width = "560";
+                    iframe.height = "315";
+                    iframe.src = `https://www.youtube.com/embed/${data.video_id}`;
+                    iframe.title = data.title || "YouTube video player";
+                    iframe.frameBorder = "0";
+                    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+                    iframe.allowFullscreen = true;
+
+                    videoContainer.appendChild(iframe);
+                    messageElement.appendChild(videoContainer);
+
+                    if (activeIframe) {
+                        activeIframe.closest('div').remove();
                     }
-                } catch (err) {
-                    console.error("Parse toolItem lỗi:", err, toolItem);
+                    activeIframe = iframe;
                 }
-            });
-
-        console.log("✅ Parsed videos:", videos);
-        videos = videos.filter(v => v && v.video_id)
-
-            if (videos.length > 0) {
-            const data = videos[0]; 
-            const videoContainer = document.createElement('div');
-            videoContainer.style.display = "flex";
-            videoContainer.style.justifyContent = "center";
-            videoContainer.style.marginBottom = "10px";
-            videoContainer.style.width = "100%"; 
-
-            const iframe = document.createElement("iframe");
-            iframe.width = "560";
-            iframe.height = "315";
-            iframe.src = `https://www.youtube.com/embed/${data.video_id}`;
-            iframe.title = data.title || "YouTube video player";
-            iframe.frameBorder = "0";
-            iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-            iframe.allowFullscreen = true;
-
-            videoContainer.appendChild(iframe);
-            messageElement.appendChild(videoContainer);
-
-            if (activeIframe) {
-                activeIframe.closest('div').remove();
+            } catch (err) {
+                console.error("Lỗi khi xử lý video:", err);
             }
-            activeIframe = iframe;
         }
-    } catch (err) {
-        console.error("Lỗi khi xử lý video:", err);
-    }
-}
-
 
         if (message.ai) {
             const textElement = document.createElement('div');
@@ -195,113 +250,104 @@ function appendMessage(sender, message) {
     chatElement.appendChild(messageElement);
     chatLog.appendChild(chatElement);
     chatLog.scrollTop = chatLog.scrollHeight;
-}
-  function appendListMessage(ListMessage) {
-  ListMessage.forEach(msg => {
-    if (msg.role === "user") {
-      appendMessage("user", msg.content);
-    } else if (msg.role === "ai") {
-      appendMessage("bot", { 
-        ai: msg.content, 
-        tool: msg.tool || [] 
-      });
-    } else if (msg.role === "tool") {
-      appendMessage("tool", msg.content);
-    }
-  });
+
+    toggleClearHistoryButton(); // ✅ gọi sau khi thêm message
 }
 
+function appendListMessage(ListMessage) {
+    ListMessage.forEach(msg => {
+        if (msg.role === "user") {
+            appendMessage("user", msg.content);
+        } else if (msg.role === "ai") {
+            appendMessage("bot", { 
+                ai: msg.content, 
+                tool: msg.tool || [] 
+            });
+        } else if (msg.role === "tool") {
+            appendMessage("tool", msg.content);
+        }
+    });
+}
 
 const micButton = document.getElementById("mic-button");
 const micIcon = document.getElementById("mic-icon");
 
+let can_record = false;
+let is_recording = false;
+let recorder = null;
+let chucks = [];
+let audioStream = null;
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  let can_record = false;
-  let is_recording = false;
-  let recorder = null;
-  let chucks = [];
-  let audioStream = null;
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-  micButton.addEventListener('click', async () => {
+micButton.addEventListener('click', async () => {
     if (!is_recording) {
-      try {
-        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        recorder = new MediaRecorder(audioStream);
-        can_record = true;
-        is_recording = true;
-        await new Promise(resolve => {
-        micIcon.classList.remove("fa-microphone-slash");
-        micIcon.classList.add("fa-microphone");
-        micButton.style.backgroundColor = "#e53935"; 
-        console.log("Mic icon bật:", micIcon.className);
-        userInput.disabled = true;
-        sendButton.disabled = true;
-        sendButton.style.backgroundColor = "#ccc";
-        sendButton.style.cursor = "not-allowed"; 
-        resolve();
-        });
-        recorder.ondataavailable = e => chucks.push(e.data);
-        
-
-        recorder.onstop = async () => {
-          console.log("🔹 Dừng ghi âm, chuẩn bị xử lý...");
-          const sessionId = sessionStorage.getItem("sessionId")
-
-          const blob = new Blob(chucks, { type: "audio/ogg; codecs=opus" });
-          chucks = [];
-
-          const arrayBuffer = await blob.arrayBuffer();
-          const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-          const wavData = audioBufferToWav(audioBuffer);
-          const wavBlob = new Blob([wavData], { type: "audio/wav" });
-                      console.log("🔹 Upload WAV lên FastAPI...");
-          const formData = new FormData();
-          formData.append("file", wavBlob, sessionId +".wav");
-            try {
-            const res = await fetch(url + "/upload-audio/", {
-              method: "POST",
-              body: formData
+        try {
+            audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            recorder = new MediaRecorder(audioStream);
+            can_record = true;
+            is_recording = true;
+            await new Promise(resolve => {
+                micIcon.classList.remove("fa-microphone-slash");
+                micIcon.classList.add("fa-microphone");
+                micButton.style.backgroundColor = "#e53935"; 
+                userInput.disabled = true;
+                sendButton.disabled = true;
+                sendButton.style.backgroundColor = "#ccc";
+                sendButton.style.cursor = "not-allowed"; 
+                resolve();
             });
-            const data = await res.json();
-            console.log("Upload thành công", data);
-          } catch(err) {
-            console.error("Upload error:", err);
+            recorder.ondataavailable = e => chucks.push(e.data);
 
-          }
-            try {
-            const res1 = await fetch(url + `/get-audio-result?session_id=${sessionId}`, {
-              method: "GET",
-              headers: {
-                "ngrok-skip-browser-warning": "true"
-              }
-            });
-            console.log("Lấy kết quả nhận diện...");
-            console.log(res1);
+            recorder.onstop = async () => {
+                console.log("🔹 Dừng ghi âm, chuẩn bị xử lý...");
+                const sessionId = sessionStorage.getItem("sessionId")
 
-            const text = await res1.json();
-            console.log(text);
-            appendListMessage(text)
-            // const data1 = JSON.parse(text);
-            // console.log("JSON:", data1);
-            // if (data1.status === "success" && data1.results.length > 0) {
-            //     userInput.value = data1.results[0].text;
-            // } else{
-            //   alert("Vui lòng nói lại!")
-            // }
-              sendButton.disabled = false;
-              userInput.disabled = false;
-              sendButton.style.backgroundColor = "#4caf50";
-              sendButton.style.cursor = "pointer"; 
+                const blob = new Blob(chucks, { type: "audio/ogg; codecs=opus" });
+                chucks = [];
 
-          } catch (err) {
-            console.error("Get result error:", err);
-        }         
-        };
-        recorder.start();
-      } catch (err) {
-        console.error("Không thể truy cập mic:", err);
-      }
+                const arrayBuffer = await blob.arrayBuffer();
+                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                const wavData = audioBufferToWav(audioBuffer);
+                const wavBlob = new Blob([wavData], { type: "audio/wav" });
+                console.log("🔹 Upload WAV lên FastAPI...");
+                const formData = new FormData();
+                formData.append("file", wavBlob, sessionId +".wav");
+                try {
+                    const res = await fetch(url + "/upload-audio/", {
+                        method: "POST",
+                        body: formData
+                    });
+                    const data = await res.json();
+                    console.log("Upload thành công", data);
+                } catch(err) {
+                    console.error("Upload error:", err);
+                }
+                try {
+                    const res1 = await fetch(url + `/get-audio-result?session_id=${sessionId}`, {
+                        method: "GET",
+                        headers: {
+                            "ngrok-skip-browser-warning": "true"
+                        }
+                    });
+                    console.log("Lấy kết quả nhận diện...");
+                    console.log(res1);
+
+                    const text = await res1.json();
+                    console.log(text);
+                    appendListMessage(text)
+                    sendButton.disabled = false;
+                    userInput.disabled = false;
+                    sendButton.style.backgroundColor = "#4caf50";
+                    sendButton.style.cursor = "pointer"; 
+
+                } catch (err) {
+                    console.error("Get result error:", err);
+                }         
+            };
+            recorder.start();
+        } catch (err) {
+            console.error("Không thể truy cập mic:", err);
+        }
 
     } else {
         recorder.stop();
@@ -312,35 +358,29 @@ const micIcon = document.getElementById("mic-icon");
         }
         is_recording = false;      
         await new Promise(resolve => {
-        micIcon.classList.remove("fa-microphone");
-        micIcon.classList.add("fa-microphone-slash");
-        micButton.style.backgroundColor = "#2196f3";
-
-
-        console.log("Mic icon tắt:", micIcon.className);
-        resolve();
+            micIcon.classList.remove("fa-microphone");
+            micIcon.classList.add("fa-microphone-slash");
+            micButton.style.backgroundColor = "#2196f3";
+            resolve();
         });
-        
     }
-  });
+});
 
-  async function loadDialogue(sessionId) {
-      try {
+async function loadDialogue(sessionId) {
+    try {
         const res = await fetch(url + `/get-dialogue/${sessionId}`);
         if (!res.ok) throw new Error(`Lỗi ${res.status}: ${res.statusText}`);
 
         const dialogue = await res.json();
         console.log("Dữ liệu dialogue:", dialogue);
-
-        appendListMessage(dialogue)
-
-      } catch (err) {
+        appendListMessage(dialogue);
+        toggleClearHistoryButton();
+    } catch (err) {
         console.error("Load dialogue error:", err);
     }
-  }
+}
 
-
-  function audioBufferToWav(buffer) {
+function audioBufferToWav(buffer) {
     let numOfChan = buffer.numberOfChannels,
         length = buffer.length * numOfChan * 2 + 44,
         bufferArray = new ArrayBuffer(length),
@@ -365,14 +405,14 @@ const micIcon = document.getElementById("mic-icon");
     for(i=0; i<numOfChan; i++) channels.push(buffer.getChannelData(i));
 
     while(offset < buffer.length){
-      for(i=0; i<numOfChan; i++){
-        sample = Math.max(-1, Math.min(1, channels[i][offset]));
-        sample = (0.5 + sample*32767)|0;
-        view.setInt16(pos, sample, true);
-        pos += 2;
-      }
-      offset++;
+        for(i=0; i<numOfChan; i++){
+            sample = Math.max(-1, Math.min(1, channels[i][offset]));
+            sample = (0.5 + sample*32767)|0;
+            view.setInt16(pos, sample, true);
+            pos += 2;
+        }
+        offset++;
     }
 
     return bufferArray;
-  }
+}

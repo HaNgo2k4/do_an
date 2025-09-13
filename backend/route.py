@@ -1,11 +1,12 @@
 from fastapi import APIRouter, UploadFile, File, Query
 from pathlib import Path
 from fastapi.responses import JSONResponse
-from app.model import RequestState
+from backend.model import RequestState
 from agents.ai_agents import get_response_from_ai_agent
 from audio_processing.speech_text import WavSpeechRecognizer
 from agents.memory import get_dialogue_by_sessionId
 from audio_processing.extract_music_segments import separate_speech_music
+import redis
 
 import json
 
@@ -105,3 +106,17 @@ async def get_audio_result(session_id: str = Query(...)):
 def get_dialogue(session_id: str):
     dialogue = get_dialogue_by_sessionId(session_id)
     return JSONResponse(content=dialogue)
+
+@router.delete("/clear-history/{session_id}")
+async def clear_history(session_id: str):
+    from agents.agent_manager import agent_cache
+    r = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+    key = f"message_store:{session_id}"
+    if not r.exists(key):
+        return {"status": "success", "message": f"Không tìm thấy lịch sử cho {session_id}"}
+
+    if session_id in agent_cache:
+        agent_cache.pop(session_id, None)
+
+    r.delete(key) 
+    return {"status": "success", "message": f"Đã xóa lịch sử cho {session_id}"}

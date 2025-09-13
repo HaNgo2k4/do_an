@@ -1,5 +1,7 @@
+</html>
 <!DOCTYPE html>
 <html lang="en">
+
 
 <head>
     <meta charset="UTF-8">
@@ -10,41 +12,61 @@
     <title>Hadiest</title>
 </head>
 
+
+
 <body>
     
     <div class="header">
         <h3>Hadiest – Trợ lý ảo hỗ trợ nghe nhạc</h3>
-         <button id="logout-button">
-        <i class="fa-solid fa-right-from-bracket"></i> Logout
-    </button>
+        <div class="header-buttons">
+            <button id="clear-history-button">
+                <i class="fa-solid fa-trash"></i> Xóa lịch sử
+            </button>
+            <button id="logout-button">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+        </div>
     </div>
+
+    <!-- Modal xác nhận xóa lịch sử -->
+    <div id="clear-history-modal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fa-solid fa-exclamation-triangle"></i> Xác nhận xóa</h3>
+            <p>Bạn có chắc chắn muốn xóa toàn bộ lịch sử trò chuyện không?</p>
+            <p style="color: #ff9800; font-size: 14px;">Hành động này không thể hoàn tác!</p>
+            <div class="modal-buttons">
+                <button id="confirm-clear" class="modal-button confirm-button">
+                    <i class="fa-solid fa-check"></i> Xóa
+                </button>
+                <button id="cancel-clear" class="modal-button cancel-button">
+                    <i class="fa-solid fa-times"></i> Hủy
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
-
-
-             
         <div class="info">
-            <a id = "name">
+            <a id="name">
                 Hadiest
             </a>
         </div>
         <div class="login-container">
-        <h2>Đăng Nhập</h2>
-        <form id="login-form">
-            <div class="input-group">
-                <i class="fa-solid fa-user"></i>
-                <input type="text" id="username" placeholder="Tên đăng nhập" required>
-            </div>
-        <button  id="conform">
-            <i class="fa-solid fa-check" id="conform-icon"></i> Đăng Nhập
-        </button>
-    </form>
-</div>
-        <div>
-
-        <div class="chat-container">
-            <div id="chat-log"></div>
+            <h2>Đăng Nhập</h2>
+            <form id="login-form">
+                <div class="input-group">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="username" placeholder="Tên đăng nhập" required>
+                </div>
+            <button id="conform">
+                <i class="fa-solid fa-check" id="conform-icon"></i> Đăng Nhập
+            </button>
+        </form>
         </div>
-
+        <div>
+            <div class="chat-container">
+                <div id="chat-log"></div>
+            </div>
         </div>
        
         <div class="input-container">
@@ -56,11 +78,8 @@
                 <i class="fa-solid fa-paper-plane" id="button-icon"></i>
             </button>
         </div>
-
     </div>
-     <div id="video-container"></div>
+    <div id="video-container"></div>
+    
     <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="index.js"></script>
-</body>
-
-</html>
+     <script src="index.js"></script>

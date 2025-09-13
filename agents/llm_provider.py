@@ -1,5 +1,5 @@
 from langchain_groq import ChatGroq
-from app.config import GROQ_API_KEY
+from backend.config import GROQ_API_KEY
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 def get_llm(provider, model):
