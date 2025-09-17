@@ -46,12 +46,10 @@ def get_response_from_ai_agent(llm_id, query, provider, user_id: str, has_wav: b
         from langchain_core.messages import SystemMessage
         enhanced_system_prompt = SystemMessage(content=enhanced_content)
     
-    # Tạo message với metadata
     human_msg = HumanMessage(content=user_message, metadata={"has_wav": has_wav, "user_id": user_id})
     state_messages = [enhanced_system_prompt] + past_messages + [human_msg]
     state = {"messages": state_messages}
 
-    # --- Gọi agent ---
     response = agent.invoke(state)
 
     ai_messages = []
@@ -65,7 +63,6 @@ def get_response_from_ai_agent(llm_id, query, provider, user_id: str, has_wav: b
             break
     subset_messages = messages[last_human_index:] if last_human_index is not None else []
 
-    # --- Xử lý phản hồi ---
     for msg in subset_messages:
         if isinstance(msg, AIMessage) and msg.content:
             ai_messages.append(normalize_content(msg.content))
@@ -74,7 +71,6 @@ def get_response_from_ai_agent(llm_id, query, provider, user_id: str, has_wav: b
             print("🔹 Tool được gọi:", msg.tool_call_id)
             print("🔹 Kết quả:", normalize_content(msg.content))
 
-    # --- Lưu chat history ---
     memory.chat_memory.add_user_message(query)
     final_ai_response = ai_messages[-1] if ai_messages else "Xin lỗi, tôi không thể phản hồi lúc này."
     if final_ai_response:

@@ -16,7 +16,6 @@ def identify_song(file_path: str):
     signature_version = "1"
     timestamp = str(int(time.time()))
 
-    # Tạo signature
     string_to_sign = f"{http_method}\n{http_uri}\n{ACCESS_KEY}\n{data_type}\n{signature_version}\n{timestamp}"
     sign = base64.b64encode(hmac.new(
         ACCESS_SECRET.encode('ascii'),

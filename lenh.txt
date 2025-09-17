@@ -5,3 +5,5 @@ sudo apt-get install ffmpeg
 
 // chạy redis-server
 redis-server
+
+python -m http.server 5500

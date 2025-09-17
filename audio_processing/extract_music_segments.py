@@ -3,7 +3,7 @@ import soundfile as sf
 from pathlib import Path
 from audio_processing.remove_silence import remove_silence
 
-print("⏳ Đang load Silero VAD...")
+print("Đang load Silero VAD...")
 model, utils = torch.hub.load(
     repo_or_dir="snakers4/silero-vad",
     model="silero_vad",
@@ -14,8 +14,7 @@ model, utils = torch.hub.load(
  read_audio,
  VADIterator,
  collect_chunks) = utils
-print("✅ Silero VAD loaded")
-
+print("Silero VAD loaded")
 
 def separate_speech_music(input_file: str, output_dir: str = None):
     wav, sr = sf.read(input_file, dtype="float32")
@@ -31,7 +30,6 @@ def separate_speech_music(input_file: str, output_dir: str = None):
         print("Không phát hiện giọng nói trong file.")
         speech_wav = torch.zeros(0)
 
-    # Collect non-speech
     if len(speech_timestamps) > 0:
         nonspeech_wav = torch.zeros_like(wav)
         last_end = 0
@@ -52,10 +50,8 @@ def separate_speech_music(input_file: str, output_dir: str = None):
     speech_file = output_dir / "speech.wav"
     nonspeech_file = output_dir / "nonspeech.wav"
 
-
     sf.write(str(speech_file), speech_wav.numpy(), sr)
     print(f"Saved speech: {speech_file}")
-
 
     if nonspeech_wav.numel() > 0:
         sf.write(str(nonspeech_file), nonspeech_wav.numpy(), sr)
@@ -66,7 +62,6 @@ def separate_speech_music(input_file: str, output_dir: str = None):
     if speech_file.exists() and speech_file.stat().st_size > 100:
         clean_speech = output_dir / "speech_clean.wav"
 
-    # Gọi hàm remove_silence để tạo file speech sạch
         if remove_silence(str(speech_file), str(clean_speech)):
             if clean_speech.exists() and clean_speech.stat().st_size > 0:
                 results["speech"] = str(speech_file)
@@ -79,7 +74,6 @@ def separate_speech_music(input_file: str, output_dir: str = None):
     if nonspeech_file.exists() and nonspeech_file.stat().st_size > 100:
         clean_nonspeech = output_dir / "nonspeech_clean.wav"
 
-        # Gọi hàm remove_silence để tạo file sạch
         if remove_silence(str(nonspeech_file), str(clean_nonspeech)):
             if clean_nonspeech.exists() and clean_nonspeech.stat().st_size > 100:
                 results["nonspeech"] = str(clean_nonspeech)

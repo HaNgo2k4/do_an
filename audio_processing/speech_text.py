@@ -6,7 +6,6 @@ class WavSpeechRecognizer:
         self.r = sr.Recognizer()
 
     def recognize_wav(self, filepath: str):
-
         results = []
         try:
             with sr.AudioFile(filepath) as source:
